@@ -27,8 +27,7 @@ def load_tsplib(path: str | Path) -> tuple[np.ndarray, dict[str, str]]:
     if not coordinates:
         raise ValueError(f"No NODE_COORD_SECTION found in {path}.")
     coordinates.sort(key=lambda row: row[0])
-    expected_ids = list(range(1, len(coordinates) + 1))
-    if [row[0] for row in coordinates] != expected_ids:
+    if [row[0] for row in coordinates] != list(range(1, len(coordinates) + 1)):
         raise ValueError("Node identifiers must be contiguous and one-based.")
     if metadata.get("EDGE_WEIGHT_TYPE") != "EUC_2D":
         raise ValueError("Only TSPLIB EUC_2D instances are supported.")

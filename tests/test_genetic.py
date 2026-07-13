@@ -3,9 +3,9 @@ from pathlib import Path
 
 import numpy as np
 
-from berlin52_ga.solver import GAConfig, run_ga
-from berlin52_ga.tours import validate_tour
-from berlin52_ga.tsplib import load_tsplib
+from tsp_optimization_lab.genetic import GAConfig, solve_genetic
+from tsp_optimization_lab.tours import validate_tour
+from tsp_optimization_lab.tsplib import load_tsplib
 
 
 COORDINATES = np.array([
@@ -14,11 +14,11 @@ COORDINATES = np.array([
 ])
 
 
-class SolverTests(unittest.TestCase):
+class GeneticTests(unittest.TestCase):
     def test_run_is_deterministic_and_preserves_valid_tours(self) -> None:
         config = GAConfig(population_size=20, generations=25, elite_count=2, seed=7)
-        first = run_ga(COORDINATES, config)
-        second = run_ga(COORDINATES, config)
+        first = solve_genetic(COORDINATES, config)
+        second = solve_genetic(COORDINATES, config)
         self.assertEqual(first.best_length, second.best_length)
         np.testing.assert_array_equal(first.best_tour, second.best_tour)
         validate_tour(first.best_tour, len(COORDINATES))
@@ -31,7 +31,7 @@ class SolverTests(unittest.TestCase):
             seed=7,
             target_length=20,
         )
-        result = run_ga(COORDINATES, config)
+        result = solve_genetic(COORDINATES, config)
         self.assertLess(len(result.history) - 1, config.generations)
         self.assertLessEqual(result.best_length, 20)
 
@@ -43,14 +43,14 @@ class SolverTests(unittest.TestCase):
         data = (
             Path(__file__).resolve().parents[1]
             / "src"
-            / "berlin52_ga"
+            / "tsp_optimization_lab"
             / "data"
             / "berlin52.tsp"
         )
         coordinates, _ = load_tsplib(data)
-        result = run_ga(coordinates, GAConfig(target_length=8000))
+        result = solve_genetic(coordinates, GAConfig(target_length=8000))
         self.assertEqual(result.best_length, 7998)
-        self.assertEqual(result.best_generation, 300)
+        self.assertEqual(result.best_step, 300)
 
 
 if __name__ == "__main__":

@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "berlin52-ga"
-version = "0.1.0"
-description = "A reproducible genetic algorithm for the TSPLIB Berlin52 problem"
+name = "tsp-optimization-lab"
+version = "0.2.0"
+description = "Reproducible comparison of classical and nature-inspired TSP solvers"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["numpy>=1.24"]
@@ -14,10 +14,10 @@ dependencies = ["numpy>=1.24"]
 plot = ["matplotlib>=3.7"]
 
 [project.scripts]
-berlin52-ga = "berlin52_ga.cli:main"
+tsp-lab = "tsp_optimization_lab.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-berlin52_ga = ["data/*.tsp"]
+tsp_optimization_lab = ["data/*.tsp"]
