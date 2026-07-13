@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
+from .ant_colony import ACOConfig, solve_ant_colony
 from .benchmark import run_benchmark
 from .genetic import GAConfig, solve_genetic
 from .nearest import solve_nearest_neighbor
@@ -23,6 +24,17 @@ def _add_ga_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--target", type=int)
 
 
+def _add_aco_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--ants", type=int, default=52)
+    parser.add_argument("--iterations", type=int, default=200)
+    parser.add_argument("--alpha", type=float, default=1.0)
+    parser.add_argument("--beta", type=float, default=3.0)
+    parser.add_argument("--evaporation", type=float, default=0.10)
+    parser.add_argument("--deposit-weight", type=float, default=100.0)
+    parser.add_argument("--ranked-ants", type=int, default=10)
+    parser.add_argument("--elite-weight", type=float, default=0.0)
+
+
 def _parser() -> argparse.ArgumentParser:
     data = Path(__file__).resolve().parent / "data" / "berlin52.tsp"
     parser = argparse.ArgumentParser(description=__doc__)
@@ -30,16 +42,18 @@ def _parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
 
     solve = commands.add_parser("solve", help="Run one solver.")
-    solve.add_argument("algorithm", choices=("nearest", "two-opt", "ga"))
+    solve.add_argument("algorithm", choices=("nearest", "two-opt", "ga", "aco"))
     solve.add_argument("--seed", type=int, default=2)
     solve.add_argument("--csv", type=Path)
     solve.add_argument("--plot", type=Path)
     _add_ga_options(solve)
+    _add_aco_options(solve)
 
     benchmark = commands.add_parser("benchmark", help="Compare available solvers.")
     benchmark.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
     benchmark.add_argument("--csv", type=Path)
     _add_ga_options(benchmark)
+    _add_aco_options(benchmark)
     return parser
 
 
@@ -57,13 +71,30 @@ def _ga_config(args, seed: int) -> GAConfig:
     )
 
 
+def _aco_config(args, seed: int) -> ACOConfig:
+    return ACOConfig(
+        ant_count=args.ants,
+        iterations=args.iterations,
+        alpha=args.alpha,
+        beta=args.beta,
+        evaporation=args.evaporation,
+        deposit_weight=args.deposit_weight,
+        ranked_ants=args.ranked_ants,
+        elite_weight=args.elite_weight,
+        seed=seed,
+        target_length=args.target,
+    )
+
+
 def _solve(args, coordinates):
     if args.algorithm == "nearest":
         result = solve_nearest_neighbor(coordinates)
     elif args.algorithm == "two-opt":
         result = solve_two_opt(coordinates)
-    else:
+    elif args.algorithm == "ga":
         result = solve_genetic(coordinates, _ga_config(args, args.seed))
+    else:
+        result = solve_ant_colony(coordinates, _aco_config(args, args.seed))
     if args.csv:
         write_history_csv(result, args.csv)
     if args.plot:
@@ -79,7 +110,8 @@ def _solve(args, coordinates):
 
 def _benchmark(args, coordinates):
     runs = run_benchmark(
-        coordinates, tuple(args.seeds), _ga_config(args, args.seeds[0])
+        coordinates, tuple(args.seeds), _ga_config(args, args.seeds[0]),
+        _aco_config(args, args.seeds[0]),
     )
     if args.csv:
         write_benchmark_csv(runs, args.csv)
@@ -98,4 +130,3 @@ def main(argv: list[str] | None = None) -> None:
     output = _solve(args, coordinates) if args.command == "solve" \
         else _benchmark(args, coordinates)
     print(json.dumps({"instance": metadata.get("NAME"), "results": output}, indent=2))
-

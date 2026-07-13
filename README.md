@@ -11,9 +11,10 @@ instance and one shared implementation of TSPLIB `EUC_2D` distance semantics.
 | Nearest neighbour | Fast constructive baseline | No |
 | 2-opt | Best-improvement local search, initialized by nearest neighbour | No |
 | Genetic algorithm | Population-based evolutionary solver | Yes |
+| Ant colony optimization | Rank-based pheromone search | Yes |
 
-Ant colony optimization and hybrid GA + 2-opt are the next planned solvers. They
-will use the same result model, evaluator and benchmark rather than separate scripts.
+Hybrid GA + 2-opt is the next planned solver. It will use the same result model,
+evaluator and benchmark rather than a separate script.
 
 ## Verified Berlin52 results
 
@@ -22,10 +23,13 @@ will use the same result model, evaluator and benchmark rather than separate scr
 - Nearest-neighbour + 2-opt: **7842** after 11 improving moves
 - Genetic algorithm, seed 2: **7905** after 1000 generations
 - Genetic algorithm with `--target 8000`: **7998** at generation 300
+- Ant colony optimization, seed 2: **7662** at iteration 86
 
 The default 1000-generation comparison produced GA distances of 8291, 8251 and
 7905 for seeds 0, 1 and 2. The deterministic 2-opt baseline therefore beats all
 three standalone GA runs while taking only a small fraction of their runtime.
+Default ACO runs reached 7717, 7727 and 7662 for seeds 0, 1 and 2. These pure
+swarm runs beat the deterministic 2-opt baseline without applying local search.
 
 The old repository reported the reference tour as `7544.37` because it summed
 continuous Euclidean edges. TSPLIB rounds every edge before summing it.
@@ -37,6 +41,7 @@ python -m pip install -e .
 python -m tsp_optimization_lab solve nearest
 python -m tsp_optimization_lab solve two-opt
 python -m tsp_optimization_lab solve ga --seed 2
+python -m tsp_optimization_lab solve aco --seed 2
 ```
 
 The installed command offers the same interface:
@@ -55,7 +60,7 @@ python -m tsp_optimization_lab solve ga --plot artifacts/ga-convergence.png
 
 ## Benchmark
 
-Compare deterministic baselines once and run the GA across explicit seeds:
+Compare deterministic baselines once and run GA and ACO across explicit seeds:
 
 ```bash
 python -m tsp_optimization_lab benchmark --seeds 0 1 2
@@ -74,8 +79,8 @@ python -m unittest discover -s tests -v
 ```
 
 Tests cover parsing, known-optimum distance, tour and operator invariants,
-determinism, 2-opt monotonicity, benchmarking and the Berlin52 GA result. CI runs
-on Linux and Windows with Python 3.10 and 3.12.
+determinism, 2-opt monotonicity, benchmarking, and competitive Berlin52 GA and
+ACO results. CI runs on Linux and Windows with Python 3.10 and 3.12.
 
 ## Structure
 
@@ -88,6 +93,7 @@ src/tsp_optimization_lab/
   two_opt.py      best-improvement local search
   genetic.py      genetic algorithm
   operators.py    GA selection, crossover and mutation
+  ant_colony.py   pheromone construction, evaporation and ranked deposits
   benchmark.py    multi-solver timing and quality runs
   reporting.py    opt-in CSV and convergence plots
   cli.py          solve and benchmark commands

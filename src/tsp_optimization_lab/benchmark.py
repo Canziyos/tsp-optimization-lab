@@ -5,6 +5,7 @@ from time import perf_counter
 
 import numpy as np
 
+from .ant_colony import ACOConfig, solve_ant_colony
 from .genetic import GAConfig, solve_genetic
 from .models import SolverResult
 from .nearest import solve_nearest_neighbor
@@ -29,9 +30,10 @@ def run_benchmark(
     coordinates: np.ndarray,
     seeds: tuple[int, ...] = (0, 1, 2),
     ga_config: GAConfig = GAConfig(),
+    aco_config: ACOConfig = ACOConfig(),
 ) -> tuple[BenchmarkRun, ...]:
     if not seeds:
-        raise ValueError("At least one GA seed is required.")
+        raise ValueError("At least one stochastic-solver seed is required.")
     nearest = _timed(
         lambda: solve_nearest_neighbor(coordinates), "nearest-neighbor", None
     )
@@ -46,5 +48,11 @@ def run_benchmark(
             "genetic-algorithm",
             seed,
         ))
+    for seed in seeds:
+        config = replace(aco_config, seed=seed)
+        runs.append(_timed(
+            lambda config=config: solve_ant_colony(coordinates, config),
+            "ant-colony",
+            seed,
+        ))
     return tuple(runs)
-
