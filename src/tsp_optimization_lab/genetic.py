@@ -6,7 +6,7 @@ import numpy as np
 
 from .models import HistoryPoint, SolverResult
 from .operators import mutate_inversion, order_crossover, tournament_select
-from .tours import initial_population, population_lengths
+from .tours import initial_population, population_lengths, validate_tour
 from .tsplib import distance_matrix
 
 
@@ -61,13 +61,22 @@ def _offspring(population, lengths, config, rng) -> np.ndarray:
     ])
 
 
-def solve_genetic(
-    coordinates: np.ndarray, config: GAConfig = GAConfig()
+def _solve_genetic(
+    coordinates: np.ndarray,
+    config: GAConfig,
+    algorithm: str,
+    initial_tour: np.ndarray | None = None,
+    refiner=None,
 ) -> SolverResult:
     distances = distance_matrix(coordinates)
     rng = np.random.default_rng(config.seed)
     population = initial_population(config.population_size, len(coordinates), rng)
     lengths = population_lengths(population, distances)
+    if initial_tour is not None:
+        validate_tour(initial_tour, len(coordinates))
+        index = int(np.argmax(lengths))
+        population[index] = initial_tour
+        lengths[index] = population_lengths(population[index : index + 1], distances)[0]
     best_index = int(np.argmin(lengths))
     best_tour = population[best_index].copy()
     best_length, best_step = int(lengths[best_index]), 0
@@ -76,6 +85,8 @@ def solve_genetic(
     for step in range(1, config.generations + 1):
         children = _offspring(population, lengths, config, rng)
         child_lengths = population_lengths(children, distances)
+        if refiner is not None:
+            refiner(children, child_lengths, distances, step)
         elite = np.argsort(lengths)[: config.elite_count]
         selected = np.argsort(child_lengths)[: config.population_size - config.elite_count]
         population = np.concatenate((population[elite], children[selected]))
@@ -88,10 +99,15 @@ def solve_genetic(
         if config.target_length is not None and best_length <= config.target_length:
             break
     return SolverResult(
-        "genetic-algorithm", best_tour, best_length, best_step,
+        algorithm, best_tour, best_length, best_step,
         tuple(history), config.seed,
     )
 
 
-run_ga = solve_genetic
+def solve_genetic(
+    coordinates: np.ndarray, config: GAConfig = GAConfig()
+) -> SolverResult:
+    return _solve_genetic(coordinates, config, "genetic-algorithm")
 
+
+run_ga = solve_genetic

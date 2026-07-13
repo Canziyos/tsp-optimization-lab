@@ -5,6 +5,7 @@ import numpy as np
 from tsp_optimization_lab.benchmark import run_benchmark
 from tsp_optimization_lab.ant_colony import ACOConfig
 from tsp_optimization_lab.genetic import GAConfig
+from tsp_optimization_lab.hybrid import HybridConfig
 
 
 COORDINATES = np.array([
@@ -17,14 +18,18 @@ class BenchmarkTests(unittest.TestCase):
     def test_benchmark_runs_baselines_once_and_stochastic_solvers_per_seed(self) -> None:
         config = GAConfig(population_size=12, generations=5, elite_count=1)
         aco = ACOConfig(ant_count=4, iterations=3, ranked_ants=2)
+        hybrid = HybridConfig(config, refine_interval=2, refine_count=2)
         runs = run_benchmark(
-            COORDINATES, seeds=(3, 4), ga_config=config, aco_config=aco
+            COORDINATES, (3, 4), config, aco, hybrid
         )
         self.assertEqual([run.algorithm for run in runs], [
             "nearest-neighbor", "two-opt", "genetic-algorithm", "genetic-algorithm",
             "ant-colony", "ant-colony",
+            "hybrid-ga-two-opt", "hybrid-ga-two-opt",
         ])
-        self.assertEqual([run.seed for run in runs], [None, None, 3, 4, 3, 4])
+        self.assertEqual(
+            [run.seed for run in runs], [None, None, 3, 4, 3, 4, 3, 4]
+        )
         self.assertTrue(all(run.elapsed_seconds >= 0.0 for run in runs))
 
     def test_benchmark_requires_a_seed(self) -> None:
