@@ -7,6 +7,7 @@ import numpy as np
 
 from .ant_colony import ACOConfig, solve_ant_colony
 from .genetic import GAConfig, solve_genetic
+from .hybrid import HybridConfig, solve_hybrid
 from .models import SolverResult
 from .nearest import solve_nearest_neighbor
 from .two_opt import solve_two_opt
@@ -31,6 +32,7 @@ def run_benchmark(
     seeds: tuple[int, ...] = (0, 1, 2),
     ga_config: GAConfig = GAConfig(),
     aco_config: ACOConfig = ACOConfig(),
+    hybrid_config: HybridConfig = HybridConfig(),
 ) -> tuple[BenchmarkRun, ...]:
     if not seeds:
         raise ValueError("At least one stochastic-solver seed is required.")
@@ -53,6 +55,13 @@ def run_benchmark(
         runs.append(_timed(
             lambda config=config: solve_ant_colony(coordinates, config),
             "ant-colony",
+            seed,
+        ))
+    for seed in seeds:
+        config = replace(hybrid_config, ga=replace(hybrid_config.ga, seed=seed))
+        runs.append(_timed(
+            lambda config=config: solve_hybrid(coordinates, config),
+            "hybrid-ga-two-opt",
             seed,
         ))
     return tuple(runs)

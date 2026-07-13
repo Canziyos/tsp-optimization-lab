@@ -4,35 +4,18 @@ import argparse
 import json
 from pathlib import Path
 
-from .ant_colony import ACOConfig, solve_ant_colony
+from .ant_colony import solve_ant_colony
 from .benchmark import run_benchmark
-from .genetic import GAConfig, solve_genetic
+from .cli_options import (
+    aco_config, add_aco_options, add_ga_options, add_hybrid_options,
+    ga_config, hybrid_config,
+)
+from .genetic import solve_genetic
+from .hybrid import solve_hybrid
 from .nearest import solve_nearest_neighbor
 from .reporting import write_benchmark_csv, write_history_csv, write_history_plot
 from .tsplib import load_tsplib
 from .two_opt import solve_two_opt
-
-
-def _add_ga_options(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--population", type=int, default=200)
-    parser.add_argument("--generations", type=int, default=1000)
-    parser.add_argument("--crossover", type=float, default=0.80)
-    parser.add_argument("--mutation", type=float, default=0.05)
-    parser.add_argument("--tournament", type=int, default=4)
-    parser.add_argument("--win-probability", type=float, default=0.75)
-    parser.add_argument("--elites", type=int, default=10)
-    parser.add_argument("--target", type=int)
-
-
-def _add_aco_options(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--ants", type=int, default=52)
-    parser.add_argument("--iterations", type=int, default=200)
-    parser.add_argument("--alpha", type=float, default=1.0)
-    parser.add_argument("--beta", type=float, default=3.0)
-    parser.add_argument("--evaporation", type=float, default=0.10)
-    parser.add_argument("--deposit-weight", type=float, default=100.0)
-    parser.add_argument("--ranked-ants", type=int, default=10)
-    parser.add_argument("--elite-weight", type=float, default=0.0)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -42,48 +25,23 @@ def _parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
 
     solve = commands.add_parser("solve", help="Run one solver.")
-    solve.add_argument("algorithm", choices=("nearest", "two-opt", "ga", "aco"))
+    solve.add_argument(
+        "algorithm", choices=("nearest", "two-opt", "ga", "aco", "hybrid")
+    )
     solve.add_argument("--seed", type=int, default=2)
     solve.add_argument("--csv", type=Path)
     solve.add_argument("--plot", type=Path)
-    _add_ga_options(solve)
-    _add_aco_options(solve)
+    add_ga_options(solve)
+    add_aco_options(solve)
+    add_hybrid_options(solve)
 
     benchmark = commands.add_parser("benchmark", help="Compare available solvers.")
     benchmark.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
     benchmark.add_argument("--csv", type=Path)
-    _add_ga_options(benchmark)
-    _add_aco_options(benchmark)
+    add_ga_options(benchmark)
+    add_aco_options(benchmark)
+    add_hybrid_options(benchmark)
     return parser
-
-
-def _ga_config(args, seed: int) -> GAConfig:
-    return GAConfig(
-        population_size=args.population,
-        generations=args.generations,
-        crossover_probability=args.crossover,
-        mutation_probability=args.mutation,
-        tournament_size=args.tournament,
-        tournament_win_probability=args.win_probability,
-        elite_count=args.elites,
-        seed=seed,
-        target_length=args.target,
-    )
-
-
-def _aco_config(args, seed: int) -> ACOConfig:
-    return ACOConfig(
-        ant_count=args.ants,
-        iterations=args.iterations,
-        alpha=args.alpha,
-        beta=args.beta,
-        evaporation=args.evaporation,
-        deposit_weight=args.deposit_weight,
-        ranked_ants=args.ranked_ants,
-        elite_weight=args.elite_weight,
-        seed=seed,
-        target_length=args.target,
-    )
 
 
 def _solve(args, coordinates):
@@ -92,9 +50,11 @@ def _solve(args, coordinates):
     elif args.algorithm == "two-opt":
         result = solve_two_opt(coordinates)
     elif args.algorithm == "ga":
-        result = solve_genetic(coordinates, _ga_config(args, args.seed))
+        result = solve_genetic(coordinates, ga_config(args, args.seed))
+    elif args.algorithm == "aco":
+        result = solve_ant_colony(coordinates, aco_config(args, args.seed))
     else:
-        result = solve_ant_colony(coordinates, _aco_config(args, args.seed))
+        result = solve_hybrid(coordinates, hybrid_config(args, args.seed))
     if args.csv:
         write_history_csv(result, args.csv)
     if args.plot:
@@ -110,8 +70,8 @@ def _solve(args, coordinates):
 
 def _benchmark(args, coordinates):
     runs = run_benchmark(
-        coordinates, tuple(args.seeds), _ga_config(args, args.seeds[0]),
-        _aco_config(args, args.seeds[0]),
+        coordinates, tuple(args.seeds), ga_config(args, args.seeds[0]),
+        aco_config(args, args.seeds[0]), hybrid_config(args, args.seeds[0]),
     )
     if args.csv:
         write_benchmark_csv(runs, args.csv)

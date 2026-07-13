@@ -8,7 +8,9 @@ from .tours import tour_length, validate_tour
 from .tsplib import distance_matrix
 
 
-def _best_move(tour: np.ndarray, distances: np.ndarray) -> tuple[int, int, int]:
+def best_two_opt_move(
+    tour: np.ndarray, distances: np.ndarray
+) -> tuple[int, int, int]:
     best_delta, best_left, best_right = 0, 0, 0
     for left in range(1, len(tour) - 2):
         for right in range(left + 1, len(tour) - 1):
@@ -39,7 +41,7 @@ def solve_two_opt(
 
     moves = 0
     while max_moves is None or moves < max_moves:
-        delta, left, right = _best_move(tour, distances)
+        delta, left, right = best_two_opt_move(tour, distances)
         if delta >= 0:
             break
         tour[left : right + 1] = tour[left : right + 1][::-1]
@@ -47,4 +49,3 @@ def solve_two_opt(
         moves += 1
         history.append(HistoryPoint(moves, length))
     return SolverResult("two-opt", tour, length, moves, tuple(history))
-
