@@ -2,8 +2,12 @@ import unittest
 
 import numpy as np
 
-from berlin52_ga.operators import mutate_inversion, order_crossover, tournament_select
-from berlin52_ga.tours import validate_tour
+from tsp_optimization_lab.operators import (
+    mutate_inversion,
+    order_crossover,
+    tournament_select,
+)
+from tsp_optimization_lab.tours import validate_tour
 
 
 class OperatorTests(unittest.TestCase):
@@ -30,4 +34,3 @@ class OperatorTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

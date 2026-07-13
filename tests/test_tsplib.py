@@ -3,14 +3,14 @@ from pathlib import Path
 
 import numpy as np
 
-from berlin52_ga.tours import tour_length, validate_tour
-from berlin52_ga.tsplib import distance_matrix, load_tsplib
+from tsp_optimization_lab.tours import tour_length, validate_tour
+from tsp_optimization_lab.tsplib import distance_matrix, load_tsplib
 
 
 DATA = (
     Path(__file__).resolve().parents[1]
     / "src"
-    / "berlin52_ga"
+    / "tsp_optimization_lab"
     / "data"
     / "berlin52.tsp"
 )

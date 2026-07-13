@@ -1,9 +1,10 @@
-"""Genetic-algorithm configuration, result model, and execution loop."""
+"""Genetic-algorithm configuration and solver."""
 
 from dataclasses import dataclass
 
 import numpy as np
 
+from .models import HistoryPoint, SolverResult
 from .operators import mutate_inversion, order_crossover, tournament_select
 from .tours import initial_population, population_lengths
 from .tsplib import distance_matrix
@@ -37,74 +38,60 @@ class GAConfig:
             raise ValueError("Probabilities must be in [0, 1].")
 
 
-@dataclass(frozen=True, slots=True)
-class GAResult:
-    best_tour: np.ndarray
-    best_length: int
-    best_generation: int
-    history: tuple[tuple[int, int, float], ...]
-
-
-def _offspring(
-    population: np.ndarray,
-    lengths: np.ndarray,
-    config: GAConfig,
-    rng: np.random.Generator,
-) -> np.ndarray:
+def _offspring(population, lengths, config, rng) -> np.ndarray:
     children: list[np.ndarray] = []
     while len(children) < config.population_size:
         parents = [
             tournament_select(
-                population,
-                lengths,
-                config.tournament_size,
-                config.tournament_win_probability,
-                rng,
+                population, lengths, config.tournament_size,
+                config.tournament_win_probability, rng,
             )
             for _ in range(2)
         ]
         if rng.random() < config.crossover_probability:
-            children.extend(
-                [order_crossover(parents[0], parents[1], rng),
-                 order_crossover(parents[1], parents[0], rng)]
-            )
+            children += [
+                order_crossover(parents[0], parents[1], rng),
+                order_crossover(parents[1], parents[0], rng),
+            ]
         else:
-            children.extend(parents)
-    return np.stack(
-        [mutate_inversion(child, config.mutation_probability, rng)
-         for child in children[: config.population_size]]
-    )
+            children += parents
+    return np.stack([
+        mutate_inversion(child, config.mutation_probability, rng)
+        for child in children[: config.population_size]
+    ])
 
 
-def run_ga(coordinates: np.ndarray, config: GAConfig = GAConfig()) -> GAResult:
+def solve_genetic(
+    coordinates: np.ndarray, config: GAConfig = GAConfig()
+) -> SolverResult:
     distances = distance_matrix(coordinates)
     rng = np.random.default_rng(config.seed)
     population = initial_population(config.population_size, len(coordinates), rng)
     lengths = population_lengths(population, distances)
     best_index = int(np.argmin(lengths))
     best_tour = population[best_index].copy()
-    best_length = int(lengths[best_index])
-    best_generation = 0
-    history = [(0, best_length, float(lengths.mean()))]
+    best_length, best_step = int(lengths[best_index]), 0
+    history = [HistoryPoint(0, best_length, float(lengths.mean()))]
 
-    for generation in range(1, config.generations + 1):
+    for step in range(1, config.generations + 1):
         children = _offspring(population, lengths, config, rng)
         child_lengths = population_lengths(children, distances)
-        elite_indices = np.argsort(lengths)[: config.elite_count]
-        child_indices = np.argsort(child_lengths)[
-            : config.population_size - config.elite_count
-        ]
-        population = np.concatenate((population[elite_indices], children[child_indices]))
-        lengths = np.concatenate((lengths[elite_indices], child_lengths[child_indices]))
-
+        elite = np.argsort(lengths)[: config.elite_count]
+        selected = np.argsort(child_lengths)[: config.population_size - config.elite_count]
+        population = np.concatenate((population[elite], children[selected]))
+        lengths = np.concatenate((lengths[elite], child_lengths[selected]))
         current = int(np.argmin(lengths))
         if lengths[current] < best_length:
             best_tour = population[current].copy()
-            best_length = int(lengths[current])
-            best_generation = generation
-        history.append((generation, int(lengths.min()), float(lengths.mean())))
+            best_length, best_step = int(lengths[current]), step
+        history.append(HistoryPoint(step, int(lengths.min()), float(lengths.mean())))
         if config.target_length is not None and best_length <= config.target_length:
             break
+    return SolverResult(
+        "genetic-algorithm", best_tour, best_length, best_step,
+        tuple(history), config.seed,
+    )
 
-    return GAResult(best_tour, best_length, best_generation, tuple(history))
+
+run_ga = solve_genetic
 

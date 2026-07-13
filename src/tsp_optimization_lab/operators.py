@@ -14,13 +14,10 @@ def tournament_select(
         raise ValueError("Tournament size must be within the population.")
     if not 0.0 <= win_probability <= 1.0:
         raise ValueError("Tournament win probability must be in [0, 1].")
-
     candidates = rng.choice(len(population), size=size, replace=False)
     ranked = candidates[np.argsort(lengths[candidates])]
-    if len(ranked) == 1 or rng.random() < win_probability:
-        winner = ranked[0]
-    else:
-        winner = rng.choice(ranked[1:])
+    winner = ranked[0] if len(ranked) == 1 or rng.random() < win_probability \
+        else rng.choice(ranked[1:])
     return population[winner].copy()
 
 
@@ -33,14 +30,12 @@ def order_crossover(
     child = np.full_like(first, -1)
     child[0] = child[-1] = 0
     child[left : right + 1] = first[left : right + 1]
-
     used = set(child[left : right + 1].tolist())
-    interior_count = len(child) - 2
-    wrapped = [1 + ((right + offset - 1) % interior_count)
-               for offset in range(1, interior_count + 1)]
-    fill_values = [second[index] for index in wrapped if second[index] not in used]
-    fill_positions = [index for index in wrapped if child[index] == -1]
-    child[fill_positions] = fill_values
+    count = len(child) - 2
+    wrapped = [1 + ((right + offset - 1) % count) for offset in range(1, count + 1)]
+    values = [second[index] for index in wrapped if second[index] not in used]
+    positions = [index for index in wrapped if child[index] == -1]
+    child[positions] = values
     return child
 
 
@@ -56,3 +51,4 @@ def mutate_inversion(
         )
         mutated[left : right + 1] = mutated[left : right + 1][::-1]
     return mutated
+
