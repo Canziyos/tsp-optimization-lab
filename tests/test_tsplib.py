@@ -3,16 +3,13 @@ from pathlib import Path
 
 import numpy as np
 
-from tsp_optimization_lab.tours import tour_length, validate_tour
-from tsp_optimization_lab.tsplib import distance_matrix, load_tsplib
+from core.tours import tour_length, validate_tour
+from core.distances import distance_matrix
+from datasets.tsplib import load_tsplib
 
 
 DATA = (
-    Path(__file__).resolve().parents[1]
-    / "src"
-    / "tsp_optimization_lab"
-    / "data"
-    / "berlin52.tsp"
+    Path(__file__).resolve().parents[1] / "datasets" / "berlin52.tsp"
 )
 OPTIMAL_TOUR = np.array([
     0, 21, 30, 17, 2, 16, 20, 41, 6, 1, 29, 22, 19, 49, 28, 15, 45,

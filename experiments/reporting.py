@@ -4,7 +4,7 @@ import csv
 from pathlib import Path
 
 from .benchmark import BenchmarkRun
-from .models import SolverResult
+from core.models import SolverResult
 
 
 def write_history_csv(result: SolverResult, path: str | Path) -> None:

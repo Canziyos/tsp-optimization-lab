@@ -2,12 +2,11 @@ import unittest
 
 import numpy as np
 
-from tsp_optimization_lab.operators import (
-    mutate_inversion,
-    order_crossover,
-    tournament_select,
-)
-from tsp_optimization_lab.tours import validate_tour
+from algorithms.genetic.crossover import order_crossover
+from algorithms.genetic.mutation import mutate_inversion
+from algorithms.genetic.selection import tournament_select
+
+from core.tours import validate_tour
 
 
 class OperatorTests(unittest.TestCase):

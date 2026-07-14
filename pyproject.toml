@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tsp-optimization-lab"
-version = "0.4.0"
+version = "0.5.0"
 description = "Reproducible comparison of classical and nature-inspired TSP solvers"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,10 +14,11 @@ dependencies = ["numpy>=1.24"]
 plot = ["matplotlib>=3.7"]
 
 [project.scripts]
-tsp-lab = "tsp_optimization_lab.cli:main"
+tsp-lab = "app.cli:main"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["algorithms*", "app*", "core*", "datasets*", "experiments*"]
 
 [tool.setuptools.package-data]
-tsp_optimization_lab = ["data/*.tsp"]
+datasets = ["*.tsp"]

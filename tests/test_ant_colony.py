@@ -3,9 +3,9 @@ from pathlib import Path
 
 import numpy as np
 
-from tsp_optimization_lab.ant_colony import ACOConfig, solve_ant_colony
-from tsp_optimization_lab.tours import validate_tour
-from tsp_optimization_lab.tsplib import load_tsplib
+from algorithms.ant_colony import ACOConfig, solve_ant_colony
+from core.tours import validate_tour
+from datasets.tsplib import load_tsplib
 
 
 COORDINATES = np.array([
@@ -41,7 +41,7 @@ class AntColonyTests(unittest.TestCase):
             ACOConfig(evaporation=1.0)
 
     def test_default_seed_reaches_competitive_berlin52_tour(self) -> None:
-        path = Path(__file__).parents[1] / "src/tsp_optimization_lab/data/berlin52.tsp"
+        path = Path(__file__).parents[1] / "datasets/berlin52.tsp"
         coordinates, _ = load_tsplib(path)
         result = solve_ant_colony(coordinates)
         self.assertLessEqual(result.best_length, 7800)

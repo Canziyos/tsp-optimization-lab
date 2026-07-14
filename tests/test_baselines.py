@@ -2,9 +2,9 @@ import unittest
 
 import numpy as np
 
-from tsp_optimization_lab.nearest import solve_nearest_neighbor
-from tsp_optimization_lab.tours import validate_tour
-from tsp_optimization_lab.two_opt import solve_two_opt
+from algorithms.nearest_neighbor import solve_nearest_neighbor
+from core.tours import validate_tour
+from algorithms.two_opt import solve_two_opt
 
 
 COORDINATES = np.array([
@@ -22,7 +22,7 @@ class BaselineTests(unittest.TestCase):
 
     def test_two_opt_never_worsens_initial_tour(self) -> None:
         nearest = solve_nearest_neighbor(COORDINATES)
-        improved = solve_two_opt(COORDINATES, nearest.best_tour)
+        improved = solve_two_opt(COORDINATES, initial_tour=nearest.best_tour)
         self.assertLessEqual(improved.best_length, nearest.best_length)
         validate_tour(improved.best_tour, len(COORDINATES))
 

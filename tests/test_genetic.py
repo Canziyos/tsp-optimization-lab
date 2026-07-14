@@ -3,9 +3,9 @@ from pathlib import Path
 
 import numpy as np
 
-from tsp_optimization_lab.genetic import GAConfig, solve_genetic
-from tsp_optimization_lab.tours import validate_tour
-from tsp_optimization_lab.tsplib import load_tsplib
+from algorithms.genetic import GAConfig, solve_genetic
+from core.tours import validate_tour
+from datasets.tsplib import load_tsplib
 
 
 COORDINATES = np.array([
@@ -42,9 +42,7 @@ class GeneticTests(unittest.TestCase):
     def test_historical_configuration_reaches_feasible_berlin52_tour(self) -> None:
         data = (
             Path(__file__).resolve().parents[1]
-            / "src"
-            / "tsp_optimization_lab"
-            / "data"
+            / "datasets"
             / "berlin52.tsp"
         )
         coordinates, _ = load_tsplib(data)

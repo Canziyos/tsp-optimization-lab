@@ -43,11 +43,11 @@ continuous Euclidean edges. TSPLIB rounds every edge before summing it.
 
 ```bash
 python -m pip install -e .
-python -m tsp_optimization_lab solve nearest
-python -m tsp_optimization_lab solve two-opt
-python -m tsp_optimization_lab solve ga --seed 2
-python -m tsp_optimization_lab solve aco --seed 2
-python -m tsp_optimization_lab solve hybrid --seed 2
+python main.py solve nearest
+python main.py solve two-opt
+python main.py solve ga --seed 2
+python main.py solve aco --seed 2
+python main.py solve hybrid --seed 2
 ```
 
 The installed command offers the same interface:
@@ -59,9 +59,9 @@ tsp-lab solve ga --generations 500 --seed 7
 Solvers write nothing unless an output is requested:
 
 ```bash
-python -m tsp_optimization_lab solve ga --csv artifacts/ga-history.csv
+python main.py solve ga --csv artifacts/ga-history.csv
 python -m pip install -e ".[plot]"
-python -m tsp_optimization_lab solve ga --plot artifacts/ga-convergence.png
+python main.py solve ga --plot artifacts/ga-convergence.png
 ```
 
 ## Benchmark
@@ -69,8 +69,8 @@ python -m tsp_optimization_lab solve ga --plot artifacts/ga-convergence.png
 Compare deterministic baselines once and run GA, ACO and the hybrid across seeds:
 
 ```bash
-python -m tsp_optimization_lab benchmark --seeds 0 1 2
-python -m tsp_optimization_lab benchmark --seeds 0 1 2 \
+python main.py benchmark --seeds 0 1 2
+python main.py benchmark --seeds 0 1 2 \
   --csv artifacts/comparison.csv
 ```
 
